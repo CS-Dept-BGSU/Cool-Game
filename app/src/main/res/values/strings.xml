@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Smart Notification Manager</string>
+    <string name="service_name">NotificationListenerService</string>
+</resources>
