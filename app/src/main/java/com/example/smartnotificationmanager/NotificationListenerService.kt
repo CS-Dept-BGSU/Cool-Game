@@ -38,36 +38,6 @@ class MyNotificationListenerService : NotificationListenerService() {
         val extras = notification.extras
         // val message = extras.getCharSequence(Notification.EXTRA_TEXT).toString()
 
-        // Get both text and big text content
-        val subject = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
-        val body = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
-
-        // Combine both contents to check for OTP
-        val message = buildString {
-            if (subject.isNotEmpty()) {
-                append(subject)
-                if (body.isNotEmpty() && body != subject) {  // Only append bigText if it's different from text
-                    append("\n")
-                    append(body)
-                }
-            } else if (body.isNotEmpty()) {
-                append(body)
-            }
-        }.trim()
-
-
-        // Check for duplicate notifications
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastProcessedTime < DUPLICATE_THRESHOLD &&
-            message == lastProcessedMessage) {
-            Log.d(TAG, "Skipping duplicate notification")
-            return
-        }
-
-        // Update last processed info
-        lastProcessedTime = currentTime
-        lastProcessedMessage = message
-
         // Log.d(TAG, "Notification posted from package: ${sbn.packageName} at ${sbn.postTime} with message: $message")
         // Add more detailed logging
         Log.d(TAG, "===============================")
@@ -78,6 +48,69 @@ class MyNotificationListenerService : NotificationListenerService() {
         Log.d(TAG, "Summary Text: ${extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)}")
         Log.d(TAG, "Sub Text: ${extras.getCharSequence(Notification.EXTRA_SUB_TEXT)}")
         Log.d(TAG, "===============================")
+
+        // Combine both contents to check for OTP
+        val subject = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim() ?: ""
+        val body = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim() ?: ""
+
+        // Remove duplicate subject in the body if it exists
+        val cleanBody = if (body.startsWith(subject)) {
+            body.substring(subject.length).trim()
+        } else {
+            body
+        }
+
+        // Split the body into lines and pair with subjects
+        val messages = if (cleanBody.contains("\n")) {
+            // Handle multi-line body
+            val lines = cleanBody.split("\n").filter { it.isNotEmpty() }
+            if (lines.any { it.contains("otp", ignoreCase = true) }) {
+                // If any line contains OTP, keep the whole message together
+                listOf(if (subject.isNotEmpty()) "$subject\n$cleanBody" else cleanBody)
+            } else {
+                listOf(cleanBody)
+            }
+        } else {
+            // Single line message
+            listOf(if (subject.isNotEmpty()) "$subject\n$cleanBody" else cleanBody)
+        }
+
+        // Process each message separately
+        messages.forEach { message ->
+            Log.d(TAG, "Starting processing message")
+            // Check for duplicate using existing logic
+            val currentTime = System.currentTimeMillis()
+            if (currentTime - lastProcessedTime < DUPLICATE_THRESHOLD &&
+                message == lastProcessedMessage
+            ) {
+                Log.d(TAG, "Skipping duplicate notification")
+                return@forEach
+            }
+
+            // Update last processed info
+            lastProcessedTime = currentTime
+            lastProcessedMessage = message
+
+            // Check if the message is not hidden and contains OTP
+            if (message != "Sensitive notification content hidden" &&
+                message != "No content" &&
+                message.contains("otp", ignoreCase = true)
+            ) {
+                // Create a formatted message that always includes subject if available
+                val formattedMessage = if (subject.isNotEmpty() && !message.startsWith(subject)) {
+                    "Subject: $subject\nBody: $message"
+                } else {
+                    message
+                }
+
+                Log.d(TAG, "OTP message detected, preparing to upload. Message: $formattedMessage")
+                uploadToGoogleDocs(formattedMessage)
+            } else {
+                Log.d(TAG, "Message either hidden or no OTP found. Message: $message")
+            }
+
+            Log.d(TAG, "Finished processing message")
+        }
 
 //        when (sbn.packageName) {
 //            "com.google.android.gm" -> {
@@ -100,18 +133,6 @@ class MyNotificationListenerService : NotificationListenerService() {
 //            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT),
 //            extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
 //        ).firstOrNull()?.toString() ?: "No content"
-
-
-        // Check if the message is not hidden and contains OTP
-        if (message != "Sensitive notification content hidden" &&
-            message != "No content" &&
-            message.contains("otp", ignoreCase = true)
-        ) {
-            Log.d(TAG, "OTP message detected, preparing to upload. Message: $message")
-            uploadToGoogleDocs(message)
-        } else {
-            Log.d(TAG, "Message either hidden or no OTP found. Message: $message")
-        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
