@@ -1,7 +1,6 @@
 package com.example.smartnotificationmanager
 
 import android.app.Notification
-import android.content.ContentValues.TAG
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -26,18 +25,92 @@ import com.google.auth.oauth2.GoogleCredentials
 import kotlinx.coroutines.DelicateCoroutinesApi
 
 class MyNotificationListenerService : NotificationListenerService() {
+    companion object {
+        private const val TAG = "NotificationListener"  // Descriptive Tag
+        private var lastProcessedTime = 0L
+        private var lastProcessedMessage = ""
+        private const val DUPLICATE_THRESHOLD = 500
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         // Check if the notification is a text message and contains "happy"
         val notification = sbn.notification
         val extras = notification.extras
-        val message = extras.getCharSequence(Notification.EXTRA_TEXT).toString()
+        // val message = extras.getCharSequence(Notification.EXTRA_TEXT).toString()
 
-        Log.d(TAG, "Notification posted from package: ${sbn.packageName} at ${sbn.postTime} with message: $message")
+        // Get both text and big text content
+        val subject = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+        val body = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString() ?: ""
 
-        if (message.contains("otp", ignoreCase = true)) {
-            Log.d(TAG, "OTP message detected, preparing to upload")
+        // Combine both contents to check for OTP
+        val message = buildString {
+            if (subject.isNotEmpty()) {
+                append(subject)
+                if (body.isNotEmpty() && body != subject) {  // Only append bigText if it's different from text
+                    append("\n")
+                    append(body)
+                }
+            } else if (body.isNotEmpty()) {
+                append(body)
+            }
+        }.trim()
+
+
+        // Check for duplicate notifications
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastProcessedTime < DUPLICATE_THRESHOLD &&
+            message == lastProcessedMessage) {
+            Log.d(TAG, "Skipping duplicate notification")
+            return
+        }
+
+        // Update last processed info
+        lastProcessedTime = currentTime
+        lastProcessedMessage = message
+
+        // Log.d(TAG, "Notification posted from package: ${sbn.packageName} at ${sbn.postTime} with message: $message")
+        // Add more detailed logging
+        Log.d(TAG, "===============================")
+        Log.d(TAG, "Package: ${sbn.packageName}")
+        Log.d(TAG, "Title: ${extras.getCharSequence(Notification.EXTRA_TITLE)}")
+        Log.d(TAG, "Text: ${extras.getCharSequence(Notification.EXTRA_TEXT)}")
+        Log.d(TAG, "Big Text: ${extras.getCharSequence(Notification.EXTRA_BIG_TEXT)}")
+        Log.d(TAG, "Summary Text: ${extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)}")
+        Log.d(TAG, "Sub Text: ${extras.getCharSequence(Notification.EXTRA_SUB_TEXT)}")
+        Log.d(TAG, "===============================")
+
+//        when (sbn.packageName) {
+//            "com.google.android.gm" -> {
+//                // Gmail specific handling
+//                val title = extras.getCharSequence(Notification.EXTRA_TITLE)
+//                val template = extras.getString(Notification.EXTRA_TEMPLATE)
+//                Log.d(TAG, "Gmail Notification - Title: $title, Template: $template")
+//            }
+//            else -> {
+//                // Normal handling for other apps
+//                Log.d(TAG, "Title: ${extras.getCharSequence(Notification.EXTRA_TITLE)}")
+//                Log.d(TAG, "Text: ${extras.getCharSequence(Notification.EXTRA_TEXT)}")
+//            }
+//        }
+//
+//        // Try different ways to get the message content
+//        val message = listOfNotNull(
+//            extras.getCharSequence(Notification.EXTRA_BIG_TEXT),
+//            extras.getCharSequence(Notification.EXTRA_TEXT),
+//            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT),
+//            extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
+//        ).firstOrNull()?.toString() ?: "No content"
+
+
+        // Check if the message is not hidden and contains OTP
+        if (message != "Sensitive notification content hidden" &&
+            message != "No content" &&
+            message.contains("otp", ignoreCase = true)
+        ) {
+            Log.d(TAG, "OTP message detected, preparing to upload. Message: $message")
             uploadToGoogleDocs(message)
+        } else {
+            Log.d(TAG, "Message either hidden or no OTP found. Message: $message")
         }
     }
 
@@ -76,7 +149,7 @@ class MyNotificationListenerService : NotificationListenerService() {
                 .setApplicationName("ProjectMessages")
                 .build()
 
-            val documentId = "17UBXsmf9XV90jfdpYB3nxfrfWpFXkL84faOiLpF944A"
+            val documentId = "1QVd6UUbztNjVoGBZ9udGnLkOBXTt-7T8ESMJTc50e-Y"
             val document = service.documents().get(documentId).execute()
 
             // Determine the insertion index
