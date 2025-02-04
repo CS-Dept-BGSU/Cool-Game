@@ -53,8 +53,8 @@ class MyNotificationListenerService : NotificationListenerService() {
         val subject = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim() ?: ""
         val fullContent = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim() ?: ""
 
-
         Log.d(TAG, "Starting processing message")
+
         // Check for duplicate using existing logic
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastProcessedTime < DUPLICATE_THRESHOLD &&
@@ -94,28 +94,6 @@ class MyNotificationListenerService : NotificationListenerService() {
         } else {
             Log.d(TAG, "Message either hidden or no OTP found. Message: $fullContent")
         }
-
-//        when (sbn.packageName) {
-//            "com.google.android.gm" -> {
-//                // Gmail specific handling
-//                val title = extras.getCharSequence(Notification.EXTRA_TITLE)
-//                val template = extras.getString(Notification.EXTRA_TEMPLATE)
-//                Log.d(TAG, "Gmail Notification - Title: $title, Template: $template")
-//            }
-//            else -> {
-//                // Normal handling for other apps
-//                Log.d(TAG, "Title: ${extras.getCharSequence(Notification.EXTRA_TITLE)}")
-//                Log.d(TAG, "Text: ${extras.getCharSequence(Notification.EXTRA_TEXT)}")
-//            }
-//        }
-//
-//        // Try different ways to get the message content
-//        val message = listOfNotNull(
-//            extras.getCharSequence(Notification.EXTRA_BIG_TEXT),
-//            extras.getCharSequence(Notification.EXTRA_TEXT),
-//            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT),
-//            extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
-//        ).firstOrNull()?.toString() ?: "No content"
     }
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -153,7 +131,7 @@ class MyNotificationListenerService : NotificationListenerService() {
                 .setApplicationName("ProjectMessages")
                 .build()
 
-            val documentId = "1QVd6UUbztNjVoGBZ9udGnLkOBXTt-7T8ESMJTc50e-Y"
+            val documentId = "1iDZrmRHG_VTqw0f---7mhJVr_a01p3nUK-YbG7pmGPk"
             val document = service.documents().get(documentId).execute()
 
             // Determine the insertion index
@@ -163,7 +141,7 @@ class MyNotificationListenerService : NotificationListenerService() {
 
             // Format the message with a timestamp
             val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val formattedMessage = "\n$message\tReceived at: $timestamp\n"
+            val formattedMessage = "\nNew OTP: \n$message\tReceived at: $timestamp\n"
 
             // Create a request to insert the formatted message
             val requests = listOf(
