@@ -27,38 +27,42 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 class MyNotificationListenerService : NotificationListenerService() {
     companion object {
         private const val TAG = "NotificationListener"  // Descriptive Tag
+
+        // Sometimes notifications are triggered multiple times - for a heads-up notification, updates it with extended description and shortened form. To keep only one of them
         private var lastProcessedTime = 0L
         private var lastProcessedMessage = ""
-        private const val DUPLICATE_THRESHOLD = 500
+        private var lastProcessedPackage = ""
+        private const val DUPLICATE_THRESHOLD = 3000 // 3 sec
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         // Check if the notification is a text message and contains "happy"
         val notification = sbn.notification
         val extras = notification.extras
-        // val message = extras.getCharSequence(Notification.EXTRA_TEXT).toString()
 
-        // Log.d(TAG, "Notification posted from package: ${sbn.packageName} at ${sbn.postTime} with message: $message")
         // Add more detailed logging
         Log.d(TAG, "===============================")
         Log.d(TAG, "Package: ${sbn.packageName}")
         Log.d(TAG, "Title: ${extras.getCharSequence(Notification.EXTRA_TITLE)}")
         Log.d(TAG, "Text: ${extras.getCharSequence(Notification.EXTRA_TEXT)}")
         Log.d(TAG, "Big Text: ${extras.getCharSequence(Notification.EXTRA_BIG_TEXT)}")
-        Log.d(TAG, "Summary Text: ${extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)}")
-        Log.d(TAG, "Sub Text: ${extras.getCharSequence(Notification.EXTRA_SUB_TEXT)}")
         Log.d(TAG, "===============================")
 
         // Combine both contents to check for OTP
-        val subject = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim() ?: ""
-        val fullContent = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim() ?: ""
+        val title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim() ?: ""
+        val text = extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim() ?: ""
+        val bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim() ?: ""
+
+        // Use the most detailed content available
+        val messageContent = if (bigText.isNotEmpty()) bigText else text
 
         Log.d(TAG, "Starting processing message")
 
         // Check for duplicate using existing logic
         val currentTime = System.currentTimeMillis()
         if (currentTime - lastProcessedTime < DUPLICATE_THRESHOLD &&
-            fullContent == lastProcessedMessage
+            messageContent == lastProcessedMessage &&
+            sbn.packageName == lastProcessedPackage
         ) {
             Log.d(TAG, "Skipping duplicate notification")
             return
@@ -66,33 +70,55 @@ class MyNotificationListenerService : NotificationListenerService() {
 
         // Update last processed info
         lastProcessedTime = currentTime
-        lastProcessedMessage = fullContent
+        lastProcessedMessage = messageContent
+        lastProcessedPackage = sbn.packageName
 
         // Check if the message is not hidden and contains OTP
-        if (fullContent != "Sensitive notification content hidden" &&
-            fullContent != "No content" &&
-            fullContent.contains("otp", ignoreCase = true)
+        if (messageContent.isNotEmpty() &&
+            (messageContent.contains("otp", ignoreCase = true) || messageContent.contains("code", ignoreCase = true))
         ) {
-            // Split into subject and body (first line is typically the subject)
-            val body = if (subject.isEmpty()) {
-                fullContent
-            } else {
-                if (fullContent.startsWith(subject)) {
-                    fullContent.substring(subject.length).trim()
-                } else {
-                    fullContent
+            val formattedMessage = when (sbn.packageName) {
+                "com.google.android.gm" -> {
+                    // Gmail format - split subject and body
+                    val subject = text
+                    val body = if (subject.isEmpty()) {
+                        messageContent
+                    } else {
+                        if (messageContent.startsWith(subject)) {
+                            messageContent.substring(subject.length).trim()
+                        } else {
+                            messageContent
+                        }
+                    }
+                    buildString {
+                        append("Type: Gmail\n")
+                        append("From: ").append(title).append("\n")
+                        append("Subject: ").append(subject).append("\n")
+                        append("Body: ").append(body).append("\n\n")
+                    }
                 }
-            }
-
-            val formattedMessage = buildString {
-                append("Subject: ").append(subject).append("\n")
-                append("Body: ").append(body).append("\n\n")
+                "com.google.android.apps.messaging", "com.android.mms" -> {
+                    // Text message format
+                    buildString {
+                        append("Type: SMS\n")
+                        append("From: ").append(title).append("\n")
+                        append("Message: ").append(messageContent).append("\n\n")
+                    }
+                }
+                else -> {
+                    // Generic format for other apps
+                    buildString {
+                        append("Type: Other (${sbn.packageName})\n")
+                        append("From: ").append(title).append("\n")
+                        append("Message: ").append(messageContent).append("\n\n")
+                    }
+                }
             }
 
             Log.d(TAG, "OTP message detected, preparing to upload. Message: $formattedMessage")
             uploadToGoogleDocs(formattedMessage)
         } else {
-            Log.d(TAG, "Message either hidden or no OTP found. Message: $fullContent")
+            Log.d(TAG, "Message either hidden or no OTP found. Message: $messageContent")
         }
     }
 
