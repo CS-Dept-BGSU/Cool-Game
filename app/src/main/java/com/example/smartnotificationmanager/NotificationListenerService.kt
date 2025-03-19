@@ -127,7 +127,6 @@ class MyNotificationListenerService : NotificationListenerService() {
         Log.d("After PK", "Working")
 
         GlobalScope.launch(Dispatchers.IO) {
-            // Use the applicationContext properly
             val inputStream: InputStream = applicationContext.assets.open("credentials.json") // Rename this file
             val jsonCred = inputStream.bufferedReader().use { it.readText() }
 
