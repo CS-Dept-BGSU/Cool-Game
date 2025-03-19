@@ -20,7 +20,8 @@ android {
     packaging {
         resources {
             excludes.add("META-INF/DEPENDENCIES")
-        }    }
+        }
+    }
 
     buildTypes {
         release {

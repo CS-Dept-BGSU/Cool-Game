@@ -1,14 +1,11 @@
 package com.example.smartnotificationmanager
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
+import android.content.ComponentName
 import android.content.Intent
-import android.service.notification.NotificationListenerService
-import android.service.notification.StatusBarNotification
-import android.app.Notification
+import android.os.Bundle
 import android.provider.Settings
 import android.text.TextUtils
-import android.content.ComponentName
+import androidx.appcompat.app.AppCompatActivity
 
 
 class MainActivity : AppCompatActivity() {
