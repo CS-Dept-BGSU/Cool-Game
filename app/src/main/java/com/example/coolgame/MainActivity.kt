@@ -1,4 +1,4 @@
-package com.example.smartnotificationmanager
+package com.example.coolgame
 
 import android.content.ComponentName
 import android.content.Intent

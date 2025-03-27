@@ -1,4 +1,4 @@
-package com.example.smartnotificationmanager
+package com.example.coolgame
 
 import org.junit.Test
 
