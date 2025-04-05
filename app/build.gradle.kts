@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.smartnotificationmanager"
+    namespace = "com.example.coolgame"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.smartnotificationmanager"
+        applicationId = "com.example.coolgame"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -20,7 +20,8 @@ android {
     packaging {
         resources {
             excludes.add("META-INF/DEPENDENCIES")
-        }    }
+        }
+    }
 
     buildTypes {
         release {

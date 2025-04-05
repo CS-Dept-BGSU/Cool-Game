@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Smart Notification Manager"
+rootProject.name = "Cool-Game"
 include(":app")
  
