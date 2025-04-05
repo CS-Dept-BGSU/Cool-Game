@@ -47,8 +47,6 @@ The app requires the following permissions:
 3. The app will start monitoring notifications automatically
 4. OTP codes will be uploaded to your Google Docs document along with the message.
 
-## Technical Details
-
 ## Security Considerations
 - The credentials.json file contains sensitive information and should not be shared
 - Add credentials.json to your .gitignore file
