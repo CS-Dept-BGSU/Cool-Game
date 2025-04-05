@@ -19,7 +19,7 @@ Cool-Game is an Android application that monitors device (i.e., phone) notificat
 ### Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/CS-Dept-BGSU/Smart-Notification-Manager.git
+   git clone git@github.com:CS-Dept-BGSU/Cool-Game.git
    ```
 
 2. Open the project in Android Studio
