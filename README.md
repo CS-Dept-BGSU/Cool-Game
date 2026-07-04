@@ -31,7 +31,7 @@ Cool-Game is an Android application that monitors device (i.e., phone) notificat
    - Place it in `app/src/main/assets/credentials.json`. Make the format similar to dummy_credentials.json.
 
 4. On the Google Cloud Console, for the same project (p), enable "Google Docs API".
-5. Manually create a new google document on docs.google.com while logged in using the above gmail id (x). Get the Google Docs document ID. As an example, https://docs.google.com/document/d/abcd/ implies that the google docs document ID is abcd.
+5. Manually create a new google document on docs.google.com while logged in using the above gmail id (x). Get the Google Docs document ID. As an example, https://docs.google.com/document/d/abcd/ implies that the google docs document ID is "abcd".
 6. Update the Google Docs document ID in the app source; specifically, in file `MyNotificationListenerService.kt`:
    ```kotlin
    val documentId = "abcd"
