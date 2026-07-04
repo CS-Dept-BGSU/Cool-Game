@@ -30,12 +30,13 @@ Cool-Game is an Android application that monitors device (i.e., phone) notificat
    - Get the credentials of the "service account" as a JSON file.
    - Place it in `app/src/main/assets/credentials.json`. Make the format similar to dummy_credentials.json.
 
-4. Manually create a new google document on docs.google.com using the gmail id (x). Get the Google Docs document ID. As an example, https://docs.google.com/document/d/xyz/ implies that the google docs document ID is xyz. Then, update the Google Docs document ID in `MyNotificationListenerService.kt`:
+4. Manually create a new google document on docs.google.com while logged in using the above gmail id (x). Get the Google Docs document ID. As an example, https://docs.google.com/document/d/abcd/ implies that the google docs document ID is abcd. Then, update the Google Docs document ID in `MyNotificationListenerService.kt`:
    ```kotlin
-   val documentId = "xyz"
+   val documentId = "abcd"
    ```
 
-5. Build and run the application
+5. Go to the Google Cloud Console and go to the same "service account". Get the email address (y) of the "service account". Note that this email address (y) is different than app owner's gmail id (x). Then, go to the google doc at https://docs.google.com/document/d/abcd/ and click on the "Share" button and give the service account email id (y) edit permission.
+6. Build and run the application
 
 ### Required Permissions
 The app requires the following permissions:
