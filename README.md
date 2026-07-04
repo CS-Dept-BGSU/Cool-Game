@@ -37,7 +37,7 @@ Cool-Game is an Android application that monitors device (i.e., phone) notificat
    val documentId = "abcd"
    ```
 
-7. Go to the Google Cloud Console and go to the same "service account". Get the email address (y) of the "service account". Note that this email address (y) is long (ending with *.iam.gserviceaccount.com) and it is different than app owner's gmail id (x). Then, go to the google doc at https://docs.google.com/document/d/abcd/ and click on the "Share" button and give the service account email id (y) edit permission.
+7. Go to the Google Cloud Console and go to the same "service account". Get the email address (y) of the "service account". Note that this email address (y) is long (ending with *.iam.gserviceaccount.com) and it is different than app owner's gmail id (x). Then, go to the google doc at https://docs.google.com/document/d/abcd/ and click on the "Share" button and give the edit permission to the service account email id (y).
 8. Build and run the application
 
 ### Required Permissions
